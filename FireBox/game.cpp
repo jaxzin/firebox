@@ -27,10 +27,12 @@ Game::Game() :
     env = new Environment(player);
     int spaceind = env->AddNewSpace(NULL, 0, 0, 225, 225, 240, 240);
 
-    env->AddNewEntrance(spaceind, QString("http://www.dgp.toronto.edu/~mccrae/"));        
     env->AddNewEnvImage(spaceind, QImage("assets/instructions.png"));
 
-    //env->AddNewEntrance(spaceind, QString("http://www.oculusvr.com/"));
+    LoadBookmarks();
+    for (int i=0; i<bookmarks_list.size(); ++i) {
+        env->AddNewEntrance(spaceind, bookmarks_list[i]);
+    }
 
     urlentrywidget = new URLEntryWidget(player);
     urlentrywidget->Hide();
@@ -55,36 +57,40 @@ void Game::Update()
 
 }
 
-void Game::DrawGL(const float half_ipd, const double rot[16])
+void Game::DrawGL(const float half_ipd, const QVector3D & right, const QVector3D & up, const QVector3D & forward)
 {
 
     //setup camera    
-    player->SetViewGL(half_ipd, rot);
-
-    /*
-    glPushMatrix();
-
-    glTranslatef(player->Pos().x() + 1.0f,player->Pos().y(),player->Pos().z() + 1.0);
-    glBegin(GL_LINES);
-    glColor3f(1, 0, 0);
-    glVertex3f(0, 0, 0);
-    glVertex3f(1, 0, 0);
-    glColor3f(0, 1, 0);
-    glVertex3f(0, 0, 0);
-    glVertex3f(0, 1, 0);
-    glColor3f(0, 0, 1);
-    glVertex3f(0, 0, 0);
-    glVertex3f(0, 0, 1);
-    glEnd();
-
-    glPopMatrix();
-    */
+    player->SetViewGL(half_ipd, right, up, forward);
 
     //draw environment    
     env->DrawGL();   
 
     //draw "overlay" or vr widgets    
     urlentrywidget->DrawGL();
+
+    //debugging stuff
+    /*
+    QVector3D pos = player->Pos();
+    QVector3D dir = player->Dir();
+
+    glPushMatrix();
+    //glTranslatef(pos.x() + dir.x(), pos.y(), pos.z() + dir.z());
+    glTranslatef(pos.x() + dir.x(), pos.y() - 1.0f, pos.z() + dir.z());
+    glScalef(0.5f, 0.5, 0.5f);
+    glBegin(GL_LINES);
+    glColor3f(1, 0, 0);
+    glVertex3f(0, 0, 0);
+    glVertex3f(right.x(), right.y(), right.z());
+    glColor3f(0, 1, 0);
+    glVertex3f(0, 0, 0);
+    glVertex3f(up.x(), up.y(), up.z());
+    glColor3f(0, 0, 1);
+    glVertex3f(0, 0, 0);
+    glVertex3f(forward.x(), forward.y(), forward.z());
+    glEnd();
+    glPopMatrix();
+    */
 
 }
 
@@ -237,5 +243,34 @@ bool Game::keyReleaseEvent(QKeyEvent * e)
     }
 
     return false;
+
+}
+
+void Game::LoadBookmarks()
+{
+
+    QString filename("bookmarks.txt");
+
+    QFile file(filename);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qDebug() << "Game::LoadBookmarks(): File " << filename << " can't be loaded";
+        return;
+    }
+
+    QTextStream ifs(&file);
+
+    while (!ifs.atEnd()) {
+
+        QString eachline = ifs.readLine();
+
+        if (eachline[0] != '#') { //not a comment line
+            bookmarks_list.push_back(eachline);
+        }
+
+    }
+
+    file.close();
+
+    qDebug() << "Game::LoadBookmarks() - Loaded" << bookmarks_list.size() << "bookmarks.";
 
 }

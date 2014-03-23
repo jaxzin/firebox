@@ -57,7 +57,7 @@ public:
 
 private:
 
-    QList <QVector3D> ShadeFloor();
+    void ShadeFloor(QList <QVector3D> & ss);
     inline void DrawTileGL(const QVector <QVector3D> & vs, const QVector <QVector2D> & ts, const QVector3D & trans, const QVector3D & s1, const QVector3D & s2, const QVector3D & s3, const QVector3D & s4);
     inline void DrawQuad(const QVector3D & v1, const QVector3D & v2, const QVector3D & v3, const QVector3D & v4,
                          const QVector2D & t1, const QVector2D & t2, const QVector2D & t3, const QVector2D & t4,

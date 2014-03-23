@@ -28,9 +28,6 @@ SOURCES += main.cpp\
     envtext.cpp \
     envobject.cpp \
     riftrenderer.cpp \
-    ../libovr_nsb/OVR_Sensor.c \
-    ../libovr_nsb/OVR_HID.c \
-    ../libovr_nsb/OVR_Helpers.c \
     urlentrywidget.cpp \
     envskybox.cpp
 
@@ -52,15 +49,11 @@ HEADERS  += mainwindow.h \
     envtext.h \
     envobject.h \
     riftrenderer.h \
-    ../libovr_nsb/OVR_Sensor.h \
-    ../libovr_nsb/OVR_HID.h \
-    ../libovr_nsb/OVR_Device.h \
-    ../libovr_nsb/OVR_Defs.h \
-    ../libovr_nsb/OVR.h \
     urlentrywidget.h \
     envskybox.h
 
-#unix:INCLUDEPATH += ../libovr_nsb ../gl-matrix.c
-unix:INCLUDEPATH += ../gl-matrix.c
-#unix:LIBS += -L../libovr_nsb -L../gl-matrix.c -lGLU -lovr_nsb -lgl-matrix
-unix:LIBS += -L../gl-matrix.c -lGLU -lgl-matrix
+unix:INCLUDEPATH += ../LibOVR/Include
+unix:LIBS += -L../LibOVR/Lib/Linux/Release/x86_64
+unix:LIBS += -lovr -lX11 -lXinerama -ludev -lGLU
+
+

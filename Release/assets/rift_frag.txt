@@ -20,8 +20,8 @@ void main()
     vec2 tc = LensCenter + Scale * rvector;
 
     //keep within bounds of texture 
-    if ((left_eye == 1 && (tc.x < 0.0 || tc.x > 0.5)) ||   
-        (left_eye == 0 && (tc.x < 0.5 || tc.x > 1.0)) ||
+    if ((left_eye == 1 && (tc.x <= 0.0 || tc.x >= 0.5)) ||   
+        (left_eye == 0 && (tc.x <= 0.5 || tc.x >= 1.0)) ||
         tc.y < 0.0 || tc.y > 1.0) {
         discard;
     }

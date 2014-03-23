@@ -116,7 +116,8 @@ void EnvEntrance::DrawGL()
         return;
     }
 
-    glColor3f(0.6f, 0.6f, 1.0f);
+    //glColor3f(0.6f, 0.6f, 1.0f); //not that visible due to skybox
+    glColor3f(0.3f, 0.3f, 0.6f); //not that visible due to skybox
 
     if (anim.Animate()) {
         anim.DrawGL();
@@ -125,6 +126,7 @@ void EnvEntrance::DrawGL()
     glPushMatrix();
     MathUtil::FacePosDirGL(BoundsMid() + QVector3D(0, 1.75, 0), dir * (-1.0f));
     glTranslatef(0, 0, -0.4f);
+    glScalef(1.5f, 1.5f, 1.5f);
     textgeom.DrawGL();
     glPopMatrix();
 

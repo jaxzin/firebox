@@ -19,7 +19,6 @@ public:
     QVector3D Pos() const;
     void Dir(const QVector3D & d);
     QVector3D Dir() const;
-    QVector3D WalkDir() const;
 
     void Height(const float h);
     float Height() const;
@@ -37,7 +36,7 @@ public:
     void WalkLeft(bool b);
     void WalkRight(bool b);
 
-    void SetViewGL(const float half_ipd, const double rot[16]);
+    void SetViewGL(const float half_ipd, const QVector3D & right, const QVector3D & up, const QVector3D & forward);
 
     QVector3D VelocityVector();
     void Update();
@@ -46,12 +45,11 @@ private:
 
     void UpdateDir();
 
-    QVector3D pos;
+    QVector3D pos;    
     QVector3D vel;
-    float maxvel;
+    float maxvel;     
 
     QVector3D dir;
-    QVector3D walk_dir;
     float theta;
     float phi;    
 

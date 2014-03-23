@@ -35,6 +35,7 @@ private:
 
     SpinAnimation * anim;
 
+    QString img_url_str;
     QImage img;
     GLuint tex;
 

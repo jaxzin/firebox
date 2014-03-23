@@ -27,6 +27,8 @@ EnvImg::EnvImg(const QUrl & url) :
     anim = new SpinAnimation();
     anim->Animate(true);
 
+    img_url_str = url.toString();
+
 }
 
 EnvImg::~EnvImg()
@@ -112,7 +114,8 @@ void EnvImg::slotFinished() {
 
     bool succeed = img.loadFromData(ba);
     if (!succeed) {
-        qDebug() << "Unable to load image from data " << ba;
+        //qDebug() << "Unable to load image from data " << ba;
+        qDebug() << "Unable to load image" << img_url_str;
     }
 
 }

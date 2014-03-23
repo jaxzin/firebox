@@ -76,7 +76,7 @@ void URLEntryWidget::DrawGL()
 
     const float alpha_val = hidden ? qMax(0.0f, 1.0f - float(time_fadestart.elapsed())/1000.0f) : qMin(1.0f, float(time_fadestart.elapsed())/1000.0f);
 
-    QVector3D dir = player->WalkDir();
+    QVector3D dir = player->Dir();
     dir.setY(0.0f);
     dir.normalize();
 

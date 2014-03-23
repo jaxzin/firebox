@@ -48,11 +48,6 @@ QVector3D Player::Dir() const
     return dir;
 }
 
-QVector3D Player::WalkDir() const
-{
-    return walk_dir;
-}
-
 void Player::UpdateDir()
 {    
     MathUtil::NormSphereToCartesian(theta, phi, dir);
@@ -84,14 +79,18 @@ void Player::TiltView(float f)
 
 }
 
-void Player::SetViewGL(const float half_ipd, const double rot[16])
+void Player::SetViewGL(const float half_ipd, const QVector3D & right, const QVector3D & up, const QVector3D & forward)
 {
 
+
+    /*
     dir = QVector3D(rot[4], rot[5], rot[6]);
-    dir.setY(-dir.y());
+    //dir.setY(-dir.y()); //JAMES CHANGE
+    dir = -dir;
 
     QVector3D v = dir;
-    QVector3D u = QVector3D(rot[8], -rot[9], rot[10]);
+    QVector3D u = QVector3D(rot[8], -rot[9], rot[10]); //JAMES CHANGE
+    //QVector3D u = QVector3D(rot[8], rot[9], rot[10]);
 
     //rotate both view and up vector by theta
     const float theta_rad = MathUtil::DegToRad(theta);
@@ -107,6 +106,24 @@ void Player::SetViewGL(const float half_ipd, const double rot[16])
     glTranslatef(-half_ipd, 0, 0);      
     v += pos;
     gluLookAt(pos.x(), pos.y(), pos.z(), v.x(), v.y(), v.z(), u.x(), u.y(), u.z());
+    */
+
+    const float theta_rad = MathUtil::DegToRad(theta);
+
+    dir = MathUtil::GetRotatedAxis(-theta_rad, forward, QVector3D(0, 1, 0));
+    const QVector3D up_rotated = MathUtil::GetRotatedAxis(-theta_rad, up, QVector3D(0, 1, 0));
+    const QVector3D right_rotated = MathUtil::GetRotatedAxis(-theta_rad, right, QVector3D(0, 1, 0));
+
+    QVector3D cent = pos + dir;
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glTranslatef(-half_ipd, 0, 0);
+    gluLookAt(pos.x(), pos.y(), pos.z(), cent.x(), cent.y(), cent.z(), up_rotated.x(), up_rotated.y(), up_rotated.z());
+
+    //qDebug() << rot[0] << rot[1] << rot[2] << rot[4] << rot[5] << rot[6] << rot[8] << rot[9] << rot[10];
+
 
     /*
     GLdouble model_view[16];
@@ -207,19 +224,25 @@ void Player::Update()
 
         float deltat = float(time.restart()) / 1000.0f;
 
-        QVector3D c = QVector3D::crossProduct(walk_dir, QVector3D(0, 1, 0));
+        QVector3D walk_dir = dir;
+        walk_dir.setY(0.0f);
+        QVector3D c = QVector3D::crossProduct(dir, QVector3D(0, 1, 0));
         c.normalize();
 
         vel = QVector3D(0, 0, 0);
 
-        if (walkForward)
+        if (walkForward) {
             vel += walk_dir * maxvel;
-        if (walkBack)
+        }
+        if (walkBack) {
             vel += walk_dir * maxvel * (-1.0f);
-        if (walkLeft)
+        }
+        if (walkLeft) {
             vel += c * maxvel * (-1.0f);
-        if (walkRight)
+        }
+        if (walkRight) {
             vel += c * maxvel;
+        }
 
         vel.setY(0.0f);
         if (vel.length() > maxvel) {

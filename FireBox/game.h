@@ -21,13 +21,15 @@ public:
     bool keyReleaseEvent(QKeyEvent * e);
 
     void Update();
-    void DrawGL(const float half_ipd, const double rot[16]);
+    void DrawGL(const float half_ipd, const QVector3D & right, const QVector3D & up, const QVector3D & forward);
 
     void initializeGL();
 
     void DrawKappas(const QList <float> & kappas);
 
 private:    
+
+    void LoadBookmarks();
 
     const float player_height;
     const float player_fly_height;
@@ -36,6 +38,8 @@ private:
 
     Environment * env;    
     URLEntryWidget * urlentrywidget;
+
+    QList <QString> bookmarks_list;
 
 };
 

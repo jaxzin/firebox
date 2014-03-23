@@ -127,6 +127,8 @@ bool EnvCell::IsDrawingDownWall()
 void EnvCell::DrawGL()
 {
 
+
+    /*
     if (owner == -1) {
 
         if (EightNeighbourOwned()) {
@@ -143,6 +145,12 @@ void EnvCell::DrawGL()
 
         return;
     }
+    */
+
+    if (owner < 0) {
+        return;
+    }
+
 
     /*
     if (animate) {
@@ -158,7 +166,8 @@ void EnvCell::DrawGL()
     */
 
     //draws floor tile
-    QList <QVector3D> ss = ShadeFloor();
+    QList <QVector3D> ss;
+    ShadeFloor(ss);
 
     switch (state) {
 
@@ -169,8 +178,8 @@ void EnvCell::DrawGL()
     {
 
         //glColor3f(1, 1, 1);
-        DrawTileGL(geom_fvs, geom_ts, QVector3D(x, 0, y), ss[0], ss[1], ss[2], ss[3]);
-        //DrawTileGL(geom_cvs, geom_ts, QVector3D(x, 4, y), ss[0], ss[1], ss[2], ss[3]);
+        DrawTileGL(geom_fvs, geom_ts, QVector3D(x, 0, y), ss[0], ss[1], ss[2], ss[3]); //floor
+        //DrawTileGL(geom_cvs, geom_ts, QVector3D(x, 4, y), ss[0], ss[1], ss[2], ss[3]); //ceiling
 
         break;
 
@@ -181,7 +190,7 @@ void EnvCell::DrawGL()
 
     }   
 
-    return;
+    //return;
 
     //draws wall tile(s)
 
@@ -210,73 +219,120 @@ void EnvCell::DrawGL()
     {
 
         //draw wall for different neighbour
-        if (IsDrawingLeftWall() && IsDrawingUpWall()) {
-            DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 0, y), dark, dark, dark, bright);
-            //DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 1, y), bright, dark, dark, bright);
-            //DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 2, y), bright, dark, dark, bright);
-            //DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 3, y), bright, dark, dark, dark);
+        if (true) {
 
-            DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 0, y), dark, dark, bright, dark);
-            //DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 1, y), dark, bright, bright, dark);
-            //DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 2, y), dark, bright, bright, dark);
-            //DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 3, y), dark, bright, dark, dark);
-        }
-        else if (IsDrawingRightWall() && IsDrawingUpWall()) {
-            DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 0, y), dark, dark, dark, bright);
-            //DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 1, y), bright, dark, dark, bright);
-            //DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 2, y), bright, dark, dark, bright);
-            //DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 3, y), bright, dark, dark, dark);
+            if (IsDrawingLeftWall() && IsDrawingUpWall()) {
+                DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 0, y), dark, dark, dark, bright);
+                DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 1, y), bright, dark, dark, bright);
+                DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 2, y), bright, dark, dark, bright);
+                DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 3, y), bright, dark, dark, dark);
 
-            DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 0, y), dark, dark, bright, dark);
-            //DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 1, y), bright, bright, bright, bright);
-            //DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 2, y), bright, bright, bright, bright);
-            //DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 3, y), dark, bright, dark, dark);
-        }
-        else if (IsDrawingRightWall() && IsDrawingDownWall()) {
-            DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 0, y), dark, dark, dark, bright);
-            //DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 1, y), bright, dark, dark, bright);
-            //DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 2, y), bright, dark, dark, bright);
-            //DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 3, y), bright, dark, dark, dark);
+                DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 0, y), dark, dark, bright, dark);
+                DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 1, y), dark, bright, bright, dark);
+                DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 2, y), dark, bright, bright, dark);
+                DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 3, y), dark, bright, dark, dark);
+            }
+            else if (IsDrawingRightWall() && IsDrawingUpWall()) {
+                DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 0, y), dark, dark, dark, bright);
+                DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 1, y), bright, dark, dark, bright);
+                DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 2, y), bright, dark, dark, bright);
+                DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 3, y), bright, dark, dark, dark);
 
-            DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 0, y), dark, dark, bright, dark);
-            //DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 1, y), dark, bright, bright, dark);
-            //DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 2, y), dark, bright, bright, dark);
-            //DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 3, y), dark, bright, dark, dark);
-        }
-        else if (IsDrawingLeftWall() && IsDrawingDownWall()) {
-            DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 0, y), dark, dark, dark, bright);
-            //DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 1, y), bright, dark, dark, bright);
-            //DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 2, y), bright, dark, dark, bright);
-            //DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 3, y), bright, dark, dark, dark);
+                DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 0, y), dark, dark, bright, dark);
+                DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 1, y), bright, bright, bright, bright);
+                DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 2, y), bright, bright, bright, bright);
+                DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 3, y), dark, bright, dark, dark);
+            }
+            else if (IsDrawingRightWall() && IsDrawingDownWall()) {
+                DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 0, y), dark, dark, dark, bright);
+                DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 1, y), bright, dark, dark, bright);
+                DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 2, y), bright, dark, dark, bright);
+                DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 3, y), bright, dark, dark, dark);
 
-            DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 0, y), dark, dark, bright, dark);
-            //DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 1, y), dark, bright, bright, dark);
-            //DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 2, y), dark, bright, bright, dark);
-            //DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 3, y), dark, bright, dark, dark);
+                DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 0, y), dark, dark, bright, dark);
+                DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 1, y), dark, bright, bright, dark);
+                DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 2, y), dark, bright, bright, dark);
+                DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 3, y), dark, bright, dark, dark);
+            }
+            else if (IsDrawingLeftWall() && IsDrawingDownWall()) {
+                DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 0, y), dark, dark, dark, bright);
+                DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 1, y), bright, dark, dark, bright);
+                DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 2, y), bright, dark, dark, bright);
+                DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 3, y), bright, dark, dark, dark);
+
+                DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 0, y), dark, dark, bright, dark);
+                DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 1, y), dark, bright, bright, dark);
+                DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 2, y), dark, bright, bright, dark);
+                DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 3, y), dark, bright, dark, dark);
+            }
+            else if (IsDrawingLeftWall()) {
+                DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 0, y), dark, dark, bright, bright);
+                DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 1, y), bright, bright, bright, bright);
+                DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 2, y), bright, bright, bright, bright);
+                DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 3, y), bright, bright, dark, dark);
+            }
+            else if (IsDrawingRightWall()) {
+                DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 0, y), dark, dark, bright, bright);
+                DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 1, y), bright, bright, bright, bright);
+                DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 2, y), bright, bright, bright, bright);
+                DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 3, y), bright, bright, dark, dark);
+            }
+            else if (IsDrawingUpWall()) {
+                DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 0, y), dark, dark, bright, bright);
+                DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 1, y), bright, bright, bright, bright);
+                DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 2, y), bright, bright, bright, bright);
+                DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 3, y), bright, bright, dark, dark);
+            }
+            else if (IsDrawingDownWall()) {
+                DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 0, y), dark, dark, bright, bright);
+                DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 1, y), bright, bright, bright, bright);
+                DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 2, y), bright, bright, bright, bright);
+                DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 3, y), bright, bright, dark, dark);
+            }
         }
-        else if (IsDrawingLeftWall()) {
-            DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 0, y), dark, dark, bright, bright);
-            //DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 1, y), bright, bright, bright, bright);
-            //DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 2, y), bright, bright, bright, bright);
-            //DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 3, y), bright, bright, dark, dark);
-        }
-        else if (IsDrawingRightWall()) {
-            DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 0, y), dark, dark, bright, bright);
-            //DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 1, y), bright, bright, bright, bright);
-            //DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 2, y), bright, bright, bright, bright);
-            //DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 3, y), bright, bright, dark, dark);
-        }
-        else if (IsDrawingUpWall()) {
-            DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 0, y), dark, dark, bright, bright);
-            //DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 1, y), bright, bright, bright, bright);
-            //DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 2, y), bright, bright, bright, bright);
-            //DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 3, y), bright, bright, dark, dark);
-        }
-        else if (IsDrawingDownWall()) {
-            DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 0, y), dark, dark, bright, bright);
-            //DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 1, y), bright, bright, bright, bright);
-            //DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 2, y), bright, bright, bright, bright);
-            //DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 3, y), bright, bright, dark, dark);
+        else {
+
+            if (IsDrawingLeftWall() && IsDrawingUpWall()) {
+                DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 0, y), dark, dark, dark, bright);
+
+                DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 0, y), dark, dark, bright, dark);
+
+            }
+            else if (IsDrawingRightWall() && IsDrawingUpWall()) {
+                DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 0, y), dark, dark, dark, bright);
+
+                DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 0, y), dark, dark, bright, dark);
+
+            }
+            else if (IsDrawingRightWall() && IsDrawingDownWall()) {
+                DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 0, y), dark, dark, dark, bright);
+
+                DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 0, y), dark, dark, bright, dark);
+
+            }
+            else if (IsDrawingLeftWall() && IsDrawingDownWall()) {
+                DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 0, y), dark, dark, dark, bright);
+
+                DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 0, y), dark, dark, bright, dark);
+
+            }
+            else if (IsDrawingLeftWall()) {
+                DrawTileGL(geom_lvs, geom_ts, QVector3D(x, 0, y), dark, dark, bright, bright);
+
+            }
+            else if (IsDrawingRightWall()) {
+                DrawTileGL(geom_rvs, geom_ts, QVector3D(x, 0, y), dark, dark, bright, bright);
+
+            }
+            else if (IsDrawingUpWall()) {
+                DrawTileGL(geom_uvs, geom_ts, QVector3D(x, 0, y), dark, dark, bright, bright);
+
+            }
+            else if (IsDrawingDownWall()) {
+                DrawTileGL(geom_dvs, geom_ts, QVector3D(x, 0, y), dark, dark, bright, bright);
+
+            }
+
         }
 
     }
@@ -394,10 +450,8 @@ bool EnvCell::EightNeighbourOwned()
 
 }
 
-QList <QVector3D> EnvCell::ShadeFloor()
-{
-
-    QList <QVector3D> ss;
+void EnvCell::ShadeFloor(QList <QVector3D> & ss)
+{   
 
     QVector3D bright(1, 1, 1);
     QVector3D dark(0.75f, 0.75f, 0.75f);
@@ -500,9 +554,7 @@ QList <QVector3D> EnvCell::ShadeFloor()
             ss.push_back(bright);
         }
 
-    }
-
-    return ss;
+    }   
 
 }
 

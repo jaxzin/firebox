@@ -2,13 +2,21 @@
 #define RIFTRENDERER_H
 
 #include <QtOpenGL>
+#include <QtGui>
 #include <QGLFunctions>
 
+#include <pthread.h>
 #include <GL/glu.h>
 
+#include <OVR.h>
+
+#include "mathutil.h"
+
+/*
 extern "C" {
-#include "../libovr_nsb/OVR.h"
+#include <libovr_nsb/OVR.h>
 }
+*/
 
 class RiftRenderer
 {
@@ -28,25 +36,33 @@ public:
     void RenderRightEye();
     void RenderToRift();
 
-    void DrawCalibrationGrid(const int density) const;
+    void GetOrientation(QVector3D & right, QVector3D & up, QVector3D & forward);
 
-    float GetEyeSeparation() const;
-    void SetEyeSeparation(const float f);
+    void DrawCalibrationGrid(const int density) const;
 
     float GetKappa(const int i) const;
     QList <float> GetKappas() const;
     QString GetKappasString() const;
-    void SetKappa(const int i, const float f);
-
-    void GetCurrentDeviceRotation(double rot[16]);
+    void SetKappa(const int i, const float f);   
 
     int FPS();
 
+    // Thread funcs
+    //void runSensorUpdateThread( Device *dev );
+    //static void *threadFunc( void *data );
+
 private:
+
+    void SetupLeftRightProjectionMatrices();
+
+    void UpdateDeviceRotation();
 
     GLuint framebuffer;
     GLuint colorbuffer;
     GLuint depthbuffer;
+
+    GLfloat left_projection_matrix[16];
+    GLfloat right_projection_matrix[16];
 
     int view_w;
     int view_h;
@@ -64,15 +80,28 @@ private:
     int scaleInLocation;
     int scaleLocation;
 
-    float eye_fov;
-    float eye_separation;
     QList <float> kappa;
 
-    Device *dev; //oculus rift device pointer
+    //Device *dev; //oculus rift device pointer
+    OVR::Ptr<OVR::DeviceManager> pManager;
+    OVR::Ptr<OVR::HMDDevice> pHMD;
+    OVR::Ptr<OVR::SensorDevice> pSensor;
+    OVR::SensorFusion *SFusion;
+
+    OVR::HMDInfo hmd;
+
+    QString rift_MonitorName;
+    float rift_EyeDistance;
+    float rift_DistortionK[4];
 
     QTime framerate_time;
     int counted_frames;
     int fps;
+
+    //these members are updated each time updateOrientation() is called via GetOrientation()
+    QVector3D right;
+    QVector3D up;
+    QVector3D forward;
 
 };
 

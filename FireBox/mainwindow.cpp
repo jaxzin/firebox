@@ -19,6 +19,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect( timer, SIGNAL(timeout()), this, SLOT(timeOut()) );
     timer->start( 16 );
 
+
+
 }
 
 MainWindow::~MainWindow()
@@ -48,8 +50,9 @@ void MainWindow::keyPressEvent(QKeyEvent * e)
             showFullScreen();
         }
     }
-    else if (e->key() == Qt::Key_Escape)
+    else if (e->key() == Qt::Key_Escape) {
         exit(0);
+    }
 
     glWidget->keyPressEvent(e);
 

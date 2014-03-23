@@ -5,7 +5,7 @@ GLWidget::GLWidget(Game * g) :
     calib_grid(false)
 {    
 
-    message_str = QString("FireBox Release 3.  URLs:Tab,Enter Walk:W,A,S,D Fly:F Grid:G,1-8 FullScreen:F11 Quit:Escape.  ");
+    message_str = QString("FireBox Release 5.  Controls - URLs:[Tab,Enter] Walk:[W,A,S,D] Fly:[F] Grid:[G,1-8] FullScreen:[F11] Quit:[Escape]");
 
     //grabMouse();
     setCursor( QCursor( Qt::BlankCursor ) );
@@ -92,19 +92,7 @@ void GLWidget::keyReleaseEvent(QKeyEvent * e)
         return;
     }
 
-    switch (e->key()) {
-
-    case Qt::Key_Left:
-
-        rift_render.SetEyeSeparation(rift_render.GetEyeSeparation() - 0.0005f);
-        qDebug() << rift_render.GetEyeSeparation();
-        break;
-
-    case Qt::Key_Right:
-
-        rift_render.SetEyeSeparation(rift_render.GetEyeSeparation() + 0.0005f);
-        qDebug() << rift_render.GetEyeSeparation();
-        break;
+    switch (e->key()) { 
 
     case Qt::Key_1:
 
@@ -175,25 +163,19 @@ void GLWidget::paintGL()
     game->DrawGL();
     */   
 
-    double rot[16];
-    rift_render.GetCurrentDeviceRotation(rot);
-    /*
-    qDebug() << "Rotation matrix:";
-    for (int i=0; i<4; ++i) {
-        qDebug() << rot[i] << rot[i+4] << rot[i+8] << rot[i+12];
-    }
-    */
+    QVector3D right, up, forward;
+    rift_render.GetOrientation(right, up, forward);
 
     rift_render.RenderClear();
 
     rift_render.RenderLeftEye();
-    game->DrawGL(-0.1, rot);
+    game->DrawGL(-0.1, right, up, forward);
     if (calib_grid) {
         rift_render.DrawCalibrationGrid(40);
     }
 
     rift_render.RenderRightEye();
-    game->DrawGL(0.1f, rot);
+    game->DrawGL(0.1f, right, up, forward);
     if (calib_grid) {
         rift_render.DrawCalibrationGrid(40);
     }
