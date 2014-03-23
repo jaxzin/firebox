@@ -1,0 +1,9 @@
+varying vec2 vPos;
+varying vec2 vTex;
+
+void main(void)
+{
+    gl_Position = ftransform(); //gl_ModelViewProjectionMatrix * gl_Vertex;
+    vPos = gl_Position.xy;
+    vTex = gl_MultiTexCoord0.xy;    
+}      
