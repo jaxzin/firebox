@@ -34,7 +34,7 @@ QVector3D EnvObject::Dir() const
     return dir;
 }
 
-GLuint EnvObject::LoadTexture(const QImage & img)
+GLuint EnvObject::LoadTexture(const QImage & img, const bool downscale)
 {
 
     if (img.isNull()) {
@@ -43,11 +43,13 @@ GLuint EnvObject::LoadTexture(const QImage & img)
 
     QImage scaledimg = img;
     //scale the image
-    if (scaledimg.width() > 512) {
-        scaledimg = scaledimg.scaledToWidth(512, Qt::SmoothTransformation);
-    }
-    if (scaledimg.height() > 512) {
-        scaledimg = scaledimg.scaledToHeight(512, Qt::SmoothTransformation);
+    if (downscale) {
+        if (scaledimg.width() > 512) {
+            scaledimg = scaledimg.scaledToWidth(512, Qt::SmoothTransformation);
+        }
+        if (scaledimg.height() > 512) {
+            scaledimg = scaledimg.scaledToHeight(512, Qt::SmoothTransformation);
+        }
     }
 
     QImage glimg;

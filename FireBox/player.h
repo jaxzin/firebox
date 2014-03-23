@@ -28,6 +28,10 @@ public:
     void Flying(const bool b);
     bool Flying() const;
 
+    void FlightMode(const bool b);
+    bool FlightMode() const;
+
+    float Theta() const;
     void SpinView(float f);
     void TiltView(float f);
 
@@ -36,9 +40,10 @@ public:
     void WalkLeft(bool b);
     void WalkRight(bool b);
 
-    void SetViewGL(const float half_ipd, const QVector3D & right, const QVector3D & up, const QVector3D & forward);
+    void SetViewGL(const float half_ipd, const QVector3D & up, const QVector3D & forward);
 
-    QVector3D VelocityVector();
+    void Velocity(const QVector3D & v);
+    QVector3D Velocity() const;
     void Update();
 
 private:
@@ -62,7 +67,9 @@ private:
 
     QTime time;
 
-    bool flying;
+    bool flight_mode;
+
+    bool flying;    
     float flyinterp;
     float flyduration;
     QVector3D flypos_start;

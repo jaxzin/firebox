@@ -74,13 +74,10 @@ void SpinAnimation::DrawGL()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    //glColor4f(0.6f, 1, 0.6f, 1.0f);
+    glColor4f(0.6f, 1, 0.6f, 1.0f);
 
-    //SPINNER
     glPushMatrix();
 
-    MathUtil::FacePosDirGL(pos, dir);
-    glTranslatef(0, 0, -0.5f);
     loadinggeom.DrawGL();
 
     glRotatef(-curtime * 360.0f, 0, 0, 1);

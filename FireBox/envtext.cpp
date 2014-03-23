@@ -3,7 +3,7 @@
 EnvText::EnvText(const QString & t) :
     text(t),
     tex(0),
-    tex_width(192),
+    tex_width(384),
     tex_height(384)
 {
 
@@ -25,10 +25,13 @@ EnvText::EnvText(const QString & t) :
     QTextOption option;
     option.setWrapMode(QTextOption::WordWrap);
 
+    QFont font("Arial", 11);
+    font.setStyleStrategy(QFont::PreferAntialias);
+
     QPainter painter(&img);            
-    //painter.fillRect(QRectF(0, 0, 128, 128), Qt::white);
-    painter.setPen(Qt::white);
-    painter.setFont(QFont("Arial", 12));
+    //painter.fillRect(QRectF(0, 0, tex_width, tex_height), Qt::white);
+    painter.setPen(Qt::black);
+    painter.setFont(QFont("Arial", 11));
     //painter.drawLine(5, 5, 25, 25);
     painter.drawText(QRectF(4, 4, tex_width-4, tex_height-4), text, option);
     painter.end();
@@ -45,7 +48,6 @@ EnvText::EnvText(const QString & t) :
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     glTexImage2D(GL_TEXTURE_2D, 0, 4, glimg.width(), glimg.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, glimg.bits());
-
     glBindTexture(GL_TEXTURE_2D, 0);
 
     //qDebug() << "Generating gl texture" << tex << "for text:" << text;
@@ -63,7 +65,7 @@ EnvText::~EnvText()
 }
 
 void EnvText::DrawGL()
-{
+{   
 
     if (tex) {
 
@@ -72,27 +74,30 @@ void EnvText::DrawGL()
 
         glPushMatrix();
 
-        MathUtil::FacePosDirGL(pos, dir);
+        QVector3D p = pos + QVector3D(0, 1.75, 0) + dir * 0.1f;
+        float angle = MathUtil::GetSignedAngleBetweenRadians(QVector3D(0, 0, 1), dir) * MathUtil::_180_OVER_PI;
 
-        glTranslatef(-0.5f, 0.0f, -0.385f);
+        float iw = 1.9f;
+        float ih = 1.9f;
 
-        float iw = 0.9f;
-        float ih = 0.9f;
+        glTranslatef(p.x(), p.y(), p.z());
+        glRotatef(angle, 0, 1, 0);
+        glTranslatef(-iw/2.0f, -ih/2.0f, 0.0f);
 
-        float scroll_val = -float(scroll_time.elapsed()) / 1000.0f / 10.0f;
+        //float scroll_val = -float(scroll_time.elapsed()) / 1000.0f / 50.0f; //scrolling is currently disabled
+        float scroll_val = 0.0f;
 
-        /*
-        if (img.width() > img.height()) {
-            iw = 1.0f;
-            ih = float(img.height()) / float(img.width());
-        }
-        else {
-            iw = float(img.width()) / float(img.height());
-            ih = 1.0f;
-        }
-        */       
+        glColor3f(1, 1, 1);
 
-        glColor3f(0.5f, 0.5f, 0.5f);
+        glBegin(GL_QUADS);
+        glVertex2f(0, 0);
+        glVertex2f(iw, 0);
+        glVertex2f(iw, ih);
+        glVertex2f(0, ih);
+        glEnd();
+
+        glTranslatef(0, 0, 0.05f);
+
         glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, tex);
 
@@ -104,10 +109,10 @@ void EnvText::DrawGL()
         glTexCoord2f(1, 0 + scroll_val);
         glVertex2f(iw, 0);
 
-        glTexCoord2f(1, 0.5f + scroll_val);
+        glTexCoord2f(1, 1.0f + scroll_val);
         glVertex2f(iw, ih);
 
-        glTexCoord2f(0, 0.5f + scroll_val);
+        glTexCoord2f(0, 1.0f + scroll_val);
         glVertex2f(0, ih);
 
         glEnd();
@@ -123,6 +128,6 @@ void EnvText::DrawGL()
 bool EnvText::WorthyOfTextBox(const QString & t)
 {
 
-    return t.simplified().length() > 50;
+    return t.simplified().length() > 50 && !t.contains("{") && !t.contains("<");
 
 }

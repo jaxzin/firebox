@@ -51,7 +51,7 @@ void TextGeom::Text(const QString & s)
 {
 
     rebuild_disp_list = true;
-    text = s.toUpper().toAscii();
+    text = s.toUpper().toLatin1();
 
     const char * data = text.data();
 
@@ -99,11 +99,14 @@ void TextGeom::SetFixedSize(const bool b, const float f)
 void TextGeom::DrawGL()
 {
 
-    /*
-    if (rebuild_disp_list) {
+    if (disp_list > 0 && !rebuild_disp_list) {
+
+        glCallList(disp_list);
+
+    }
+    else {
 
         rebuild_disp_list = false;
-        */
 
         const char * data = text.data();
         float s;
@@ -115,9 +118,9 @@ void TextGeom::DrawGL()
             s = qMin(maxx / len, maxy / height);
         }
 
-        //DeleteDisplayList();
-        //disp_list = glGenLists(1);
-        //glNewList(disp_list, GL_COMPILE_AND_EXECUTE);
+        DeleteDisplayList();
+        disp_list = glGenLists(1);
+        glNewList(disp_list, GL_COMPILE_AND_EXECUTE);
 
         glPushMatrix();
 
@@ -139,16 +142,10 @@ void TextGeom::DrawGL()
 
         glPopMatrix();
 
-        //glEndList();
-
-        /*
-    }
-    else if (disp_list > 0 && !rebuild_disp_list) {
-
-        glCallList(disp_list);
+        glEndList();
 
     }
-    */
+
 
 }
 

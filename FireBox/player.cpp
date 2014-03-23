@@ -10,7 +10,9 @@ Player::Player() :
     walkBack(false),
     walkLeft(false),
     walkRight(false),
+    flight_mode(false),
     flying(false)
+
 {
 
     UpdateDir();
@@ -53,6 +55,11 @@ void Player::UpdateDir()
     MathUtil::NormSphereToCartesian(theta, phi, dir);
 }
 
+float Player::Theta() const
+{
+    return theta;
+}
+
 void Player::SpinView(float f)
 {
 
@@ -79,7 +86,7 @@ void Player::TiltView(float f)
 
 }
 
-void Player::SetViewGL(const float half_ipd, const QVector3D & right, const QVector3D & up, const QVector3D & forward)
+void Player::SetViewGL(const float half_ipd, const QVector3D & up, const QVector3D & forward)
 {
 
 
@@ -112,7 +119,7 @@ void Player::SetViewGL(const float half_ipd, const QVector3D & right, const QVec
 
     dir = MathUtil::GetRotatedAxis(-theta_rad, forward, QVector3D(0, 1, 0));
     const QVector3D up_rotated = MathUtil::GetRotatedAxis(-theta_rad, up, QVector3D(0, 1, 0));
-    const QVector3D right_rotated = MathUtil::GetRotatedAxis(-theta_rad, right, QVector3D(0, 1, 0));
+    //const QVector3D right_rotated = MathUtil::GetRotatedAxis(-theta_rad, right, QVector3D(0, 1, 0));
 
     QVector3D cent = pos + dir;
 
@@ -123,8 +130,6 @@ void Player::SetViewGL(const float half_ipd, const QVector3D & right, const QVec
     gluLookAt(pos.x(), pos.y(), pos.z(), cent.x(), cent.y(), cent.z(), up_rotated.x(), up_rotated.y(), up_rotated.z());
 
     //qDebug() << rot[0] << rot[1] << rot[2] << rot[4] << rot[5] << rot[6] << rot[8] << rot[9] << rot[10];
-
-
     /*
     GLdouble model_view[16];
     glGetDoublev(GL_MODELVIEW_MATRIX, model_view);
@@ -192,7 +197,22 @@ bool Player::Flying() const
     return flying;
 }
 
-QVector3D Player::VelocityVector()
+void Player::FlightMode(const bool b)
+{
+    flight_mode = b;
+}
+
+bool Player::FlightMode() const
+{
+    return flight_mode;
+}
+
+void Player::Velocity(const QVector3D & v)
+{
+    vel = v;
+}
+
+QVector3D Player::Velocity() const
 {
     return vel;
 }

@@ -1,9 +1,11 @@
 #include "mathutil.h"
 
-float MathUtil::_180_BY_PI = 180.0f / 3.14159f;
-float MathUtil::_PI_BY_180 = 3.14159f / 180.0f;
+float MathUtil::_180_OVER_PI = 180.0f / 3.14159f;
+float MathUtil::_PI_OVER_180 = 3.14159f / 180.0f;
 float MathUtil::_PI = 3.14159f;
+float MathUtil::_2_PI = 3.14159f;
 float MathUtil::_PI_OVER_2 = 3.14159f / 2.0f;
+float MathUtil::_PI_OVER_4 = 3.14159f / 4.0f;
 
 MathUtil::MathUtil()
 {
@@ -11,12 +13,12 @@ MathUtil::MathUtil()
 
 float MathUtil::DegToRad(float f)
 {
-    return f * _PI_BY_180;
+    return f * _PI_OVER_180;
 }
 
 float MathUtil::RadToDeg(float f)
 {
-    return f * _180_BY_PI;
+    return f * _180_OVER_PI;
 }
 
 bool MathUtil::GetRayTriIntersect(const QVector3D & rayp, const QVector3D & rayd, const Triangle3D & tri, QVector3D & ipt)
@@ -107,6 +109,25 @@ QVector3D MathUtil::CosInterp(QVector3D p1, QVector3D p2, float i)
 
 }
 
+float MathUtil::GetAngleBetweenRadians(const QVector3D & v1, const QVector3D & v2)
+{
+
+    return acosf(QVector3D::dotProduct(v1.normalized(), v2.normalized()));
+
+}
+
+float MathUtil::GetSignedAngleBetweenRadians(const QVector3D & v1, const QVector3D & v2)
+{
+    float angle = MathUtil::GetAngleBetweenRadians(v1, v2);
+    QVector3D cross_prod = QVector3D::crossProduct(v1, v2);
+
+    if (cross_prod.y() > 0.0f) {
+        return angle;
+    }
+    else {
+        return -angle;
+    }
+}
 
 QVector3D MathUtil::GetRotatedAxis(const float anglerad, const QVector3D & vec, const QVector3D & axis) {
 

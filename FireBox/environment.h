@@ -7,15 +7,19 @@
 #include "enventrance.h"
 #include "envtitle.h"
 #include "envskybox.h"
+
 #include "player.h"
+#include "soundmanager.h"
+
 
 class Environment
 {
 public:
 
-    Environment(Player * p);
+    Environment();
     ~Environment();
 
+    void SetPlayer(Player * p);
     void LoadTextures();
 
     int AddNewSpace(EnvEntrance * ent, int minarea, int minperim, int x1, int y1, int x2, int y2);
@@ -29,7 +33,6 @@ public:
     int EvaluateRoom(const int minarea, const int minperim, const int x1, const int y1, const int x2, const int y2);
     int EvaluatePerimeter(int x1, int y1, int x2, int y2);
     int EvaluateArea(int x1, int y1, int x2, int y2);
-
     bool FindFreePerimeterPart(const int roomind, const int len, const int space, int & x1, int & y1, int & x2, int & y2, CellDir & d );
 
     EnvCell & Cell(int x, int y);
@@ -43,7 +46,12 @@ public:
     void Update();
     void DrawGL();
 
+    void Clear();
+
 private:   
+
+    QVector3D heatmap(double val);
+    QVector3D huecycle(double val);
 
     void DeleteDisplayList();
 
@@ -60,7 +68,7 @@ private:
     QList <EnvRoom *> rooms;
     QList <EnvEntrance *> entrances;
     QList <EnvTitle *> roomtitles;
-    EnvSkybox skybox;
+    EnvSkybox skybox;   
 
     QSet <QString> alllinks;
 

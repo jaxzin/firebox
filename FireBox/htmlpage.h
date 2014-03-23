@@ -8,7 +8,8 @@
 enum HTMLDataType {
     TEXT,
     IMAGE,
-    LINK
+    LINK,
+    DIV
 };
 
 struct HTMLData {
@@ -25,7 +26,9 @@ class HTMLPage : public QObject, public QXmlDefaultHandler
 
 public:
 
-    HTMLPage(QUrl u);
+    HTMLPage();
+
+    void SetURL(const QUrl & u);
 
     void Request();
     bool Loaded();
@@ -46,6 +49,10 @@ public slots:
 
 private:
 
+    void AddImage(const QString & img_url_str);
+    void AddLink(const QString & link_url_str);
+
+    QStringList GetStringsBetween(const QString & s1, const QString & s2, const QString & str);
     QString HTMLExtract(const QString & tag, const QString & html);
 
     static QNetworkAccessManager * manager;
@@ -62,6 +69,9 @@ private:
     int numimages;
     int numlinks;
     int numtexts;
+
+    QString url_str;
+    QString url_prefix;
 
 };
 

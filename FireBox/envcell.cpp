@@ -24,6 +24,8 @@ EnvCell::EnvCell() :
 
 {
 
+    color = QVector3D(1, 1, 1);
+
     if (geom_fvs.empty()) {
 
         InitGeometry();
@@ -205,8 +207,8 @@ void EnvCell::DrawGL()
     }
     else {
 
-        bright = QVector3D(1, 1, 1);
-        dark = QVector3D(0.75f, 0.75f, 0.75f);
+        bright = QVector3D(1, 1, 1) * color;
+        dark = QVector3D(0.75f, 0.75f, 0.75f) * color;
 
     }
 
@@ -424,6 +426,16 @@ int EnvCell::Owner() {
     return owner;
 }
 
+void EnvCell::Color(const QVector3D & c)
+{
+    color = c;
+}
+
+QVector3D EnvCell::Color()
+{
+    return color;
+}
+
 void EnvCell::Neighbours(EnvCell * l, EnvCell * r, EnvCell * u, EnvCell * d, EnvCell * ul, EnvCell * ur, EnvCell * dl, EnvCell * dr)
 {
     left = l;
@@ -455,6 +467,9 @@ void EnvCell::ShadeFloor(QList <QVector3D> & ss)
 
     QVector3D bright(1, 1, 1);
     QVector3D dark(0.75f, 0.75f, 0.75f);
+
+    bright *= color;
+    dark *= color;
     //QVector3D dark(0.5f, 0.5f, 0.5f);
 
     bool l = IsDrawingLeftWall();

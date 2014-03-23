@@ -2,72 +2,66 @@
 
 Game::Game() :
     player_height(2.25f),
-    player_fly_height(40.0f),
-    player_high(false)
+    player_fly_height(40.0f)
 {   
 
-    player = new Player();
-    player->Height(player_height);
-    player->Pos(230.0f, player_height, 230.0f);
+    //player = new Player();
+    //player->Height(player_height);
+    player.Height(player_height);
+
+    //env = new Environment();
+    //env.SetPlayer(&player);
 
     QString instruct_text = QString("(Mouse left, right) - Rotate the view (about Y axis or 'yaw')");
     instruct_text += "(Tab) - Toggle visibility of URL entry widget";
     instruct_text += "(Enter) - Add URL as doorway in current room";
-    instruct_text += "(Backspace) - Go back a webpage/room, or remove character when entering URL";
-    instruct_text += "(W,A,S,D) - Translate (walk) around";
-    instruct_text += "(F) - Toggle 'flying'' (lets you see the layout of the rooms from above, motion is fun in VR!)";
+    instruct_text += "(Backspace) - Navigate back (or backspace when entering URL)";
+    instruct_text += "(W,A,S,D) - Walk around";
+    instruct_text += "(F) - Flight mode (see the layout of the rooms from above)";
     instruct_text += "(G) - Toggle visibility of calibration grid and distortion parameters";
+    instruct_text += "(R) - Reset environment";
     instruct_text += "(1,2) - Adjust kappa_0";
     instruct_text += "(3,4) - Adjust kappa_1";
     instruct_text += "(5,6) - Adjust kappa_2";
     instruct_text += "(7,8) - Adjust kappa_3";
     instruct_text += "(F11) - Toggle fullscreen mode";
 
-    //set up environment, add an initial space, and my homepage as a start entrance
-    env = new Environment(player);
-    int spaceind = env->AddNewSpace(NULL, 0, 0, 225, 225, 240, 240);
-
-    env->AddNewEnvImage(spaceind, QImage("assets/instructions.png"));
+    //urlentrywidget = new URLEntryWidget(&player);
+    urlentrywidget.SetPlayer(&player);
 
     LoadBookmarks();
-    for (int i=0; i<bookmarks_list.size(); ++i) {
-        env->AddNewEntrance(spaceind, bookmarks_list[i]);
-    }
-
-    urlentrywidget = new URLEntryWidget(player);
-    urlentrywidget->Hide();
 
 }
 
 void Game::Update()
 {      
 
-    player->Update();
-    env->Update();
-
-    env->ClipPlayerVelocity();
+    player.Update();
+    //env.Update();
+    env2.Update(player);
 
     //disable movement while widget is visible
-    if (urlentrywidget->IsVisible()) {
-        player->WalkForward(false);
-        player->WalkBack(false);
-        player->WalkLeft(false);
-        player->WalkRight(false);
+    if (urlentrywidget.IsVisible()) {
+        player.WalkForward(false);
+        player.WalkBack(false);
+        player.WalkLeft(false);
+        player.WalkRight(false);
     }
 
 }
 
-void Game::DrawGL(const float half_ipd, const QVector3D & right, const QVector3D & up, const QVector3D & forward)
+void Game::DrawGL(const float half_ipd, const QVector3D & up, const QVector3D & forward)
 {
 
     //setup camera    
-    player->SetViewGL(half_ipd, right, up, forward);
+    player.SetViewGL(half_ipd, up, forward);
 
     //draw environment    
-    env->DrawGL();   
+    //env.DrawGL();
+    env2.DrawGL(player);
 
     //draw "overlay" or vr widgets    
-    urlentrywidget->DrawGL();
+    urlentrywidget.DrawGL();
 
     //debugging stuff
     /*
@@ -97,7 +91,10 @@ void Game::DrawGL(const float half_ipd, const QVector3D & right, const QVector3D
 void Game::initializeGL()
 {
 
-    env->LoadTextures();
+    //env.LoadTextures();
+    env2.initializeGL();
+
+    Reset();
 
 }
 
@@ -126,7 +123,7 @@ void Game::mouseMoveEvent(float x, float)
 
     const float sensitivity = 0.1f;
 
-    player->SpinView(x * sensitivity);    
+    player.SpinView(x * sensitivity);
     //player->TiltView(y * sensitivity);
 
 }
@@ -144,20 +141,22 @@ void Game::mouseReleaseEvent(QMouseEvent *)
 void Game::keyPressEvent(QKeyEvent * e)
 {
 
-    if (urlentrywidget->IsVisible()) {
+    if (urlentrywidget.IsVisible()) {
 
         if (e->key() == Qt::Key_Tab) {
-            urlentrywidget->Hide();
+            urlentrywidget.Hide();
         }
         else if (e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
-            env->AddNewEntrance(env->PlayerCurRoom(), urlentrywidget->Text());
-            urlentrywidget->Hide();
+            //env.AddNewEntrance(env.PlayerCurRoom(), urlentrywidget.Text());
+            env2.AddPortal(env2.PlayerCurRoom(), urlentrywidget.Text());
+            SoundManager::Play(5, false);
+            urlentrywidget.Hide();
         }
         else if (e->key() == Qt::Key_Backspace) {
-            urlentrywidget->RemoveLetter();
+            urlentrywidget.RemoveLetter();
         }
         else {
-            urlentrywidget->AddLetter(e->text());
+            urlentrywidget.AddLetter(e->text());
         }
 
     }
@@ -166,46 +165,62 @@ void Game::keyPressEvent(QKeyEvent * e)
         switch (e->key()) {
 
         case Qt::Key_W:
-            player->WalkForward(true);
+            player.WalkForward(true);
             break;
 
         case Qt::Key_S:
-            player->WalkBack(true);
+            player.WalkBack(true);
             break;
 
         case Qt::Key_A:
-            player->WalkLeft(true);
+            player.WalkLeft(true);
             break;
 
         case Qt::Key_D:
-            player->WalkRight(true);
+            player.WalkRight(true);
             break;
 
         case Qt::Key_F:
 
         {
-            player_high = !player_high;
 
-            QVector3D pos(player->Pos().x(), 0, player->Pos().z());
+            player.FlightMode(!player.FlightMode());
 
-            if (player_high) {
-                player->FlyTo(pos + QVector3D(0, player_fly_height, 0), player->Dir(), 2000.0f);
+            QVector3D pos(player.Pos().x(), 0, player.Pos().z());
+
+            if (player.FlightMode()) {
+                SoundManager::Play(6, false);
+                player.FlyTo(pos + QVector3D(0, player_fly_height, 0), player.Dir(), 2000.0f);
             }
             else {
-                player->FlyTo(pos + QVector3D(0, player_height, 0), player->Dir(), 2000.0f);
+                SoundManager::Play(7, false);
+                player.FlyTo(pos + QVector3D(0, player_height, 0), player.Dir(), 2000.0f);
             }
 
             break;
         }
 
+        case Qt::Key_R:
+
+            SoundManager::Play(15, false);
+            Reset();
+            break;
+
         case Qt::Key_Backspace:
 
-            player->FlyTo(env->PlayerBackPos(), env->PlayerBackDir(), 2000.0f);
+            if (env2.PlayerCanGoBack()) {
+                SoundManager::Play(16, false);
+
+                QVector3D new_pos = env2.PlayerBackPos();
+                QVector3D new_dir = env2.PlayerBackDir();
+                player.FlyTo(new_pos + QVector3D(0, player_height, 0), new_dir, 2000.0f);
+            }
             break;
 
         case Qt::Key_Tab:
 
-            urlentrywidget->Show();
+            SoundManager::Play(4, false);
+            urlentrywidget.Show();
 
             break;
 
@@ -218,26 +233,26 @@ void Game::keyPressEvent(QKeyEvent * e)
 bool Game::keyReleaseEvent(QKeyEvent * e)
 {
 
-    if (urlentrywidget->IsVisible()) {
+    if (urlentrywidget.IsVisible()) {
         return true;
     }
 
     switch (e->key()) {
 
     case Qt::Key_W:
-        player->WalkForward(false);
+        player.WalkForward(false);
         break;
 
     case Qt::Key_S:
-        player->WalkBack(false);
+        player.WalkBack(false);
         break;
 
     case Qt::Key_A:
-        player->WalkLeft(false);
+        player.WalkLeft(false);
         break;
 
     case Qt::Key_D:
-        player->WalkRight(false);
+        player.WalkRight(false);
         break;
 
     }
@@ -261,9 +276,10 @@ void Game::LoadBookmarks()
 
     while (!ifs.atEnd()) {
 
-        QString eachline = ifs.readLine();
+        QString eachline = ifs.readLine().simplified();
+        //qDebug() << eachline;
 
-        if (eachline[0] != '#') { //not a comment line
+        if (eachline[0] != '#' || eachline.length() <= 0) { //not a comment or blank line
             bookmarks_list.push_back(eachline);
         }
 
@@ -272,5 +288,42 @@ void Game::LoadBookmarks()
     file.close();
 
     qDebug() << "Game::LoadBookmarks() - Loaded" << bookmarks_list.size() << "bookmarks.";
+
+}
+
+void Game::Reset()
+{
+
+    //player.Pos(230.0f, player_height, 230.0f);
+    player.Pos(0.0f, player_height, 0.0f);
+    player.Dir(QVector3D(0, 0, 14));
+    player.FlightMode(false);
+    player.Flying(false);
+
+    env2.Reset();
+
+    env2.AddImage(0, QImage("assets/instructions.png"));
+
+    for (int i=0; i<bookmarks_list.size(); ++i) {
+        env2.AddPortal(0, bookmarks_list[i]);
+        //if (i == 0) {
+        //    env.AddNewEnvImage(spaceind, QImage("assets/instructions.png"));
+        //}
+    }
+
+    //set up environment, add an initial space, and my homepage as a start entrance
+    /*
+    env.Clear();
+    int spaceind = env.AddNewSpace(NULL, 0, 0, 225, 225, 240, 240);
+
+    for (int i=0; i<bookmarks_list.size(); ++i) {
+        env.AddNewEntrance(spaceind, bookmarks_list[i]);
+        if (i == 0) {
+            env.AddNewEnvImage(spaceind, QImage("assets/instructions.png"));
+        }
+    }
+    */
+
+    urlentrywidget.Hide();
 
 }

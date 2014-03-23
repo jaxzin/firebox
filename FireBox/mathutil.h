@@ -24,6 +24,8 @@ public:
 
     static void FacePosDirGL(QVector3D pos, QVector3D dir);
 
+    static float GetAngleBetweenRadians(const QVector3D & v1, const QVector3D & v2);
+    static float GetSignedAngleBetweenRadians(const QVector3D & v1, const QVector3D & v2);
     static QVector3D GetRotatedAxis(const float anglerad, const QVector3D & vec, const QVector3D & axis);
 
     static void SphereToCartesian(const float thetadeg, const float phideg, const float r, QVector3D & p);
@@ -35,10 +37,12 @@ public:
     static QVector3D Slerp(QVector3D p1, QVector3D p2, float i);
     static QVector3D CosInterp(QVector3D p1, QVector3D p2, float i);
 
-    static float _180_BY_PI;
-    static float _PI_BY_180;
+    static float _180_OVER_PI;
+    static float _PI_OVER_180;
     static float _PI;
+    static float _2_PI;
     static float _PI_OVER_2;
+    static float _PI_OVER_4;
 
 
 };

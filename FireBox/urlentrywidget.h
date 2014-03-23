@@ -12,7 +12,9 @@ class URLEntryWidget : public EnvObject
 
 public:
 
-    URLEntryWidget(const Player * player); 
+    URLEntryWidget();
+
+    void SetPlayer(Player * p);
 
     void AddLetter(const QString & c);
     void RemoveLetter();
@@ -30,7 +32,7 @@ private:
     void UpdateTextGeom();
 
     QTime time;
-    const Player * player;
+    Player * player;
 
     QTime time_fadestart;
     bool hidden;

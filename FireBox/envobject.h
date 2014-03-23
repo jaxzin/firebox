@@ -20,7 +20,7 @@ public:
 
     virtual void DrawGL() = 0;
 
-    static GLuint LoadTexture(const QImage & img);
+    static GLuint LoadTexture(const QImage & img, const bool downscale);
 
 protected:
 

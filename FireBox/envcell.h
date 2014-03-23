@@ -47,6 +47,9 @@ public:
     void Owner(int o);
     int Owner();
 
+    void Color(const QVector3D & c);
+    QVector3D Color();
+
     void Neighbours(EnvCell * l, EnvCell * r, EnvCell * u, EnvCell * d, EnvCell * ul, EnvCell * ur, EnvCell * dl, EnvCell * dr);
     bool EightNeighbourOwned();
 
@@ -70,6 +73,7 @@ private:
     int x;
     int y;
     int owner;
+    QVector3D color;
 
     EnvCell * left;
     EnvCell * right;

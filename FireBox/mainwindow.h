@@ -5,7 +5,6 @@
 #include <QtGui>
 
 #include "glwidget.h"
-#include "game.h"
 
 class MainWindow : public QMainWindow
 {
@@ -23,9 +22,9 @@ public slots:
     void timeOut();
 
 private:
-    GLWidget * glWidget;
-    Game * game;
-    QTimer * timer;        
+
+    GLWidget glWidget;
+    QTimer timer;
 };
 
 #endif // MAINWINDOW_H

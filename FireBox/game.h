@@ -3,9 +3,11 @@
 
 #include <QtGui>
 
-#include "environment.h"
+//#include "environment.h"
+#include "environment2.h"
 #include "player.h"
 #include "urlentrywidget.h"
+#include "soundmanager.h"
 
 class Game
 {
@@ -21,23 +23,25 @@ public:
     bool keyReleaseEvent(QKeyEvent * e);
 
     void Update();
-    void DrawGL(const float half_ipd, const QVector3D & right, const QVector3D & up, const QVector3D & forward);
+    void DrawGL(const float half_ipd, const QVector3D & up, const QVector3D & forward);
 
     void initializeGL();
 
     void DrawKappas(const QList <float> & kappas);
 
+    void Reset();
+
 private:    
 
     void LoadBookmarks();
 
+    Player player;
     const float player_height;
-    const float player_fly_height;
-    Player * player;
-    bool player_high;
+    const float player_fly_height;    
 
-    Environment * env;    
-    URLEntryWidget * urlentrywidget;
+    //Environment env;
+    Environment2 env2;
+    URLEntryWidget urlentrywidget;
 
     QList <QString> bookmarks_list;
 

@@ -5,33 +5,15 @@ using namespace OVR;
 RiftRenderer::RiftRenderer()
 {
 
+    oculus_detected = false;
+
+    kappa.push_back(1.0);
+    kappa.push_back(1.63);
+    kappa.push_back(7.8);
+    kappa.push_back(0.0);
+
     counted_frames = 0;
     fps = 0;
-
-    /*
-    dev = new Device;
-    dev = openRift(0, dev);
-    //dev = openRift(0, 0);
-
-    if (!dev)
-    {
-        qDebug() << "Could not locate Rift\n";
-        qDebug() << "Be sure you have read/write permission to the proper /dev/hidrawX device\n";
-
-    }
-    else {       
-
-        qDebug() << "Device Info:";
-        qDebug() << "\tmanufacturer:" << dev->name;
-        qDebug() << "\tproduct:     " << dev->product;
-        qDebug() << "\tvendor:      " << dev->vendorId;
-        qDebug() << "\tproduct:     " << dev->productId;
-
-        // Fire up Sensor update thread
-        runSensorUpdateThread(dev);
-
-    }
-    */
 
     //using Oculus Rift SDK
     System::Init(Log::ConfigureDefaultLog(LogMask_All));
@@ -44,20 +26,20 @@ RiftRenderer::RiftRenderer()
     }
 
     qDebug() << "Created pManager: pointer address" << pManager;
+    //DeviceEnumerator<HMDDevice> devEnum = pManager->EnumerateDevices<OVR::HMDDevice>();
 
-    DeviceEnumerator<HMDDevice> devEnum = pManager->EnumerateDevices<OVR::HMDDevice>();
-    qDebug() << "Device type" << devEnum.GetType();
+    //qDebug() << "Device type" << devEnum.GetType();
     pHMD = *pManager->EnumerateDevices<HMDDevice>().CreateDevice();
 
     if (pHMD == NULL) {
         qDebug() << "Warning: pManager->EnumerateDevices<>().CreateDevice() returned NULL ";
-        QMessageBox::critical(NULL, QString("Error"), QString("Could not detect Oculus Rift device."));
+        //QMessageBox::critical(NULL, QString("Error"), QString("Could not detect Oculus Rift device."));
         return;
     }
 
     if (!pHMD->GetDeviceInfo(&hmd)) {
         qDebug() << "Warning: pHMD->GetDeviceInfo() returned NULL ";
-        QMessageBox::critical(NULL, QString("Error"), QString("Could not get information for Oculus Rift device."));
+        //QMessageBox::critical(NULL, QString("Error"), QString("Could not get information for Oculus Rift device."));
         return;
     }
 
@@ -69,111 +51,23 @@ RiftRenderer::RiftRenderer()
     rift_DistortionK[2] = hmd.DistortionK[2];
     rift_DistortionK[3] = hmd.DistortionK[3];
 
-
-    /*
-    kappa.push_back(1.0);
-    kappa.push_back(1.7);
-    kappa.push_back(0.7);
-    kappa.push_back(15.0);
-    */
-
-    kappa.push_back(1.0);
-    kappa.push_back(1.63);
-    kappa.push_back(7.8);
-    kappa.push_back(0.0);
-
-    /*
-    kappa.push_back(1.0);
-    kappa.push_back(1.0);
-    kappa.push_back(2.5);
-    kappa.push_back(16.0);
-    */
-
-    /*
-    kappa.push_back(rift_DistortionK[0]);
-    kappa.push_back(rift_DistortionK[1]);
-    kappa.push_back(rift_DistortionK[2]);
-    kappa.push_back(rift_DistortionK[3]);
-    */
-
     pSensor = *pHMD->GetSensor();
 
     if (!pSensor) {
         qDebug() << "Warning: pHMD->GetSensor() returned NULL ";
-        QMessageBox::critical(NULL, QString("Error"), QString("Could not communicate with Oculus Rift sensor."));
+        //QMessageBox::critical(NULL, QString("Error"), QString("Could not communicate with Oculus Rift sensor."));
         return;
     }
 
     SFusion = new OVR::SensorFusion();
     SFusion->AttachToSensor(pSensor);
 
-    // Create the device
-    /*
-    dev = new Device;
-    memset(dev,0,sizeof(Device));
-
-    // Start the update thread
-    runSensorUpdateThread(dev);
-
-    // Wait for the update thread to run
-    while ( ! dev->runSampleThread )
-    {
-        qDebug() << "Waiting for update thread ";
-        //sleep(1);
-    }
-    qDebug() << "Update thread started";
-
-
-    if (!dev)
-    {
-        qDebug() << "Could not locate Rift\n";
-        qDebug() << "Be sure you have read/write permission to the proper /dev/hidrawX device\n";
-
-        // TODO - Should probably throw or something
-    }
-    else {
-
-        qDebug() << "Device Info:";
-        qDebug() << "\tmanufacturer:" << dev->name;
-        qDebug() << "\tproduct:     " << dev->product;
-        qDebug() << "\tvendor:      " << dev->vendorId;
-        qDebug() << "\tproduct:     " << dev->productId;
-    }
-    */
+    oculus_detected = true;
 
 }
-
-/*
-void RiftRenderer::runSensorUpdateThread( Device *dev )
-{
-    pthread_t f1_thread;
-    dev->runSampleThread = TRUE;
-    pthread_create(&f1_thread,NULL,threadFunc,dev);
-}
-
-void *RiftRenderer::threadFunc( void *data )
-{
-    Device *localDev = (Device *)data;
-    if( !openRift(0,localDev) )
-    {
-        return 0;
-    }
-
-    while( localDev->runSampleThread )
-    {
-        // Try to sample the device for 1ms
-        waitSampleDevice(localDev, 1000);
-
-        // Send a keepalive - this is too often.  Need to only send on keepalive interval
-        sendSensorKeepAlive(localDev);
-    }
-    return 0;
-}
-*/
 
 void RiftRenderer::initializeGL()
 {   
-
 
     SetupLeftRightProjectionMatrices();
 
@@ -209,8 +103,11 @@ void RiftRenderer::initializeGL()
     glFuncs.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorbuffer, 0);
 
     glFuncs.glBindRenderbuffer(GL_RENDERBUFFER, depthbuffer);
-    glFuncs.glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, view_w, view_h);
-    glFuncs.glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthbuffer);
+    //glFuncs.glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, view_w, view_h);
+    //glFuncs.glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, view_w, view_h);
+    glFuncs.glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, view_w, view_h);
+    //glFuncs.glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthbuffer);
+    glFuncs.glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthbuffer);
 
     GLenum status = glFuncs.glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status == GL_FRAMEBUFFER_COMPLETE) {
@@ -260,13 +157,6 @@ void RiftRenderer::SetViewportSize(const int w, const int h)
 
 }
 
-bool RiftRenderer::IsRiftDetected()
-{
-    //return (dev != NULL);
-    //return true;
-    return (pManager != NULL && pHMD != NULL && pSensor != NULL);
-}
-
 void RiftRenderer::RenderClear()
 {
 
@@ -278,25 +168,6 @@ void RiftRenderer::RenderClear()
 void RiftRenderer::RenderLeftEye()
 {
 
-    /*
-    //old way
-    glViewport(0, 0, view_w/2, view_h);
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(eye_fov, 1.0f, 0.5f, 500.0f);
-
-    glMatrixMode(GL_MODELVIEW);
-    */
-
-    //Rift SDK way
-    //TODO make this not re-calculate each frame
-    /*
-    glViewport(0, 0, view_w/2, view_h);
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadMatrixf(left_projection_matrix);
-    */
     glViewport(0, 0, view_w/2, view_h);
 
     glMatrixMode(GL_PROJECTION);
@@ -311,20 +182,7 @@ void RiftRenderer::RenderLeftEye()
 void RiftRenderer::RenderRightEye()
 {
 
-    /*
-    //old way
-    glViewport(view_w/2, 0, view_w/2, view_h);
-
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(eye_fov, 1.0f, 0.5f, 500.0f);
-
-    glMatrixMode(GL_MODELVIEW);
-    */
-
-    //Rift SDK way
-    //TODO make this not re-calculate each frame
+    //Rift SDK way    
     glViewport(view_w/2, 0, view_w/2, view_h);
 
     glMatrixMode(GL_PROJECTION);
@@ -347,96 +205,6 @@ void RiftRenderer::RenderToRift()
         fps = counted_frames;
         counted_frames = 0;
     }
-
-    /*
-    //old way
-    const float scaleFactor = 0.9f; //in Oculus SDK example it's "1.0f/Distortion.Scale"
-    const float as = float(view_w / 2.0f) / float(view_h); //rift's "half screen aspect ratio";
-
-    GLfloat lensCentreLeft[2] = {0.25, 0.5};
-    GLfloat lensCentreRight[2] = {0.75, 0.5};
-
-    //GLfloat scale[2] = {0.5f, as}; //this causes vertical stretching
-    GLfloat scale[2] = {0.4f, as};
-    GLfloat scaleIn[2] = {2.0f * scaleFactor, 1.0f / as * scaleFactor};
-
-    //qDebug() << "scale" << scale[0] << scale[1] << "Scalein" << scaleIn[0] << scaleIn[1] << "view" << view_w << view_h << "as" << as;
-
-    //render to back buffer
-    glFuncs.glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    //glViewport(0, 0, 1280, 800);
-    glViewport(0, 0, view_w, view_h);
-
-    //set colour to white
-    glColor3f(1, 1, 1);
-
-    //orthographic projection onto the image plane
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluOrtho2D(0, 1, 0, 1);
-
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
-    //setup the left eye texture sampling
-    glBindTexture(GL_TEXTURE_2D, colorbuffer);
-    shader.setUniformValue(frameBufLocation, colorbuffer);
-    shader.bind();
-    shader.setUniformValue(leftEyeLocation, 1);
-    shader.setUniformValue(kappa1Location, kappa[0]);
-    shader.setUniformValue(kappa2Location, kappa[1]);
-    shader.setUniformValue(kappa3Location, kappa[2]);
-    shader.setUniformValue(kappa4Location, kappa[3]);
-    shader.setUniformValue(scaleLocation, scale[0], scale[1]);
-    shader.setUniformValue(scaleInLocation, scaleIn[0], scaleIn[1]);
-    //shader.setUniformValue(scaleLocation, 1.0f, 1.0f);
-    //shader.setUniformValue(scaleInLocation, 1.0f, 1.0f);
-
-    shader.setUniformValue(lensCentreLocation, lensCentreLeft[0], lensCentreLeft[1]);
-
-    glBegin(GL_QUADS);
-    glTexCoord2f(0, 0);
-    glVertex2f(0.0f + eye_separation, 0);
-
-    glTexCoord2f(0, 1);
-    glVertex2f(0.0f + eye_separation, 1);
-
-    glTexCoord2f(0.5, 1);
-    //glTexCoord2f(1, 1);
-    glVertex2f(0.5f + eye_separation, 1);
-
-    glTexCoord2f(0.5, 0);
-    //glTexCoord2f(1, 0);
-    glVertex2f(0.5f + eye_separation, 0);
-    glEnd();
-
-    shader.setUniformValue(leftEyeLocation, 0);
-    shader.setUniformValue(lensCentreLocation, lensCentreRight[0], lensCentreRight[1]);
-
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.5, 0);
-    //glTexCoord2f(0, 0);
-    glVertex2f(0.5f - eye_separation, 0);
-
-    glTexCoord2f(0.5, 1);
-    //glTexCoord2f(0, 1);
-    glVertex2f(0.5f - eye_separation, 1);
-
-    glTexCoord2f(1, 1);
-    glVertex2f(1.0f - eye_separation, 1);
-
-    glTexCoord2f(1, 0);
-    glVertex2f(1.0f - eye_separation, 0);
-    glEnd();
-
-    shader.release();
-
-    glBindTexture( GL_TEXTURE_2D, 0);
-    */
-
-    //float lensCentre = 1.0f - 2.0f * (hmd.LensSeparationDistance / hmd.HScreenSize);
-    //qDebug() << "Lenscentre:" << hmd.LensSeparationDistance << hmd.HScreenSize << hmd.LensSeparationDistance / hmd.HScreenSize / 2.0f << lensCentre;
 
     const float halfLensSeparation = hmd.LensSeparationDistance / hmd.HScreenSize / 2.0f;
 
@@ -487,12 +255,12 @@ void RiftRenderer::RenderToRift()
     glBegin(GL_QUADS);
     glTexCoord2f(0, 0);
     glVertex2f(0.0f + eye_separation, 0);
-    glTexCoord2f(0, 1);
-    glVertex2f(0.0f + eye_separation, 1);
-    glTexCoord2f(0.5, 1);
-    glVertex2f(0.5f + eye_separation, 1);
     glTexCoord2f(0.5, 0);
     glVertex2f(0.5f + eye_separation, 0);
+    glTexCoord2f(0.5, 1);
+    glVertex2f(0.5f + eye_separation, 1);
+    glTexCoord2f(0, 1);
+    glVertex2f(0.0f + eye_separation, 1);
     glEnd();
 
     shader.setUniformValue(leftEyeLocation, 0);
@@ -500,13 +268,13 @@ void RiftRenderer::RenderToRift()
 
     glBegin(GL_QUADS);
     glTexCoord2f(0.5, 0);
-    glVertex2f(0.5f - eye_separation, 0);
-    glTexCoord2f(0.5, 1);
-    glVertex2f(0.5f - eye_separation, 1);
-    glTexCoord2f(1, 1);
-    glVertex2f(1.0f - eye_separation, 1);
+    glVertex2f(0.5f - eye_separation, 0);    
     glTexCoord2f(1, 0);
     glVertex2f(1.0f - eye_separation, 0);
+    glTexCoord2f(1, 1);
+    glVertex2f(1.0f - eye_separation, 1);
+    glTexCoord2f(0.5, 1);
+    glVertex2f(0.5f - eye_separation, 1);
     glEnd();
 
     shader.release();
@@ -552,6 +320,11 @@ void RiftRenderer::DrawCalibrationGrid(const int density) const
     glEnd();
 
 }
+
+ bool RiftRenderer::IsRiftDetected() const
+ {     
+     return oculus_detected;
+ }
 
 float RiftRenderer::GetKappa(const int i) const
 {
@@ -600,29 +373,7 @@ void RiftRenderer::SetKappa(const int i, const float f)
 void RiftRenderer::UpdateDeviceRotation()
 {
 
-    /*
-    if (dev) { //if we opened the rift device
-
-        double m4[16];
-        //quat_toMat4(dev->Q, m4);
-        quat_toMat4(dev->QP, m4);
-        mat4_toRotationMat(m4, rot);       
-
-    }
-    */
     if (pSensor) {
-
-        //Quatf hmdOrient = SFusion.GetOrientation();
-        /*
-        OVR::Quatf hmdOrient = SFusion->GetOrientation();
-        OVR::Matrix4f hmdMat(hmdOrient);
-        for (int i=0; i<4; ++i) {
-            for (int j=0; j<4; ++j) {
-                //rot[i*4 + j] = hmdMat.M[i][j];
-                rot[i*4 + j] = hmdMat.M[i][j];
-            }
-        }
-        */
 
         OVR::Quatf hmdOrient = SFusion->GetOrientation();
 
@@ -636,13 +387,6 @@ void RiftRenderer::UpdateDeviceRotation()
 
     }    
     else { //otherwise we apply no extra rotation (identity)
-
-        /*
-        rot[0] = 1.0f; rot[4] = 0.0f; rot[8] = 0.0f; rot[12] = 0.0f;
-        rot[1] = 0.0f; rot[5] = 0.0f; rot[9] = -1.0f; rot[13] = 0.0f;
-        rot[2] = 0.0f; rot[6] = 1.0f; rot[10] = 0.0f; rot[14] = 0.0f;
-        rot[3] = 0.0f; rot[7] = 0.0f; rot[11] = 0.0f; rot[15] = 1.0f;
-        */
 
         right = QVector3D(1, 0, 0);
         up = QVector3D(0, 1, 0);
@@ -677,7 +421,7 @@ void RiftRenderer::SetupLeftRightProjectionMatrices()
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(yfov, aspectRatio, 0.5f, 500.0f);
+    gluPerspective(yfov, aspectRatio, 0.005f, 100.0f);
 
     glGetFloatv(GL_PROJECTION_MATRIX, left_projection_matrix);
     glGetFloatv(GL_PROJECTION_MATRIX, right_projection_matrix);

@@ -9,11 +9,13 @@
 
 #include "game.h"
 #include "riftrenderer.h"
+#include "soundmanager.h"
 
 class GLWidget : public QGLWidget
 {
+
 public:
-    GLWidget(Game * g);       
+    GLWidget();
 
     void mouseMoveEvent(QMouseEvent * e);
     void mousePressEvent(QMouseEvent * e);
@@ -25,11 +27,19 @@ public:
     void resizeGL(int w, int h);
     void paintGL();
 
+    void UpdateGame();
+
 private:
 
+    QPoint GetWinCentre();
+    void SetupInstructions();
+    void DrawInstructions();
+
     QPoint mouse_pos;
-    Game * game;
+    Game game;
     RiftRenderer rift_render;
+
+    GLuint instruct_tex;
 
     QString message_str;
     bool calib_grid;

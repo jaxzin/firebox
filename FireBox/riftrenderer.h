@@ -27,9 +27,7 @@ public:
 
     void initializeGL();
 
-    void SetViewportSize(const int w, const int h);
-
-    bool IsRiftDetected();
+    void SetViewportSize(const int w, const int h);   
 
     void RenderClear();
     void RenderLeftEye();
@@ -40,6 +38,7 @@ public:
 
     void DrawCalibrationGrid(const int density) const;
 
+    bool IsRiftDetected() const;
     float GetKappa(const int i) const;
     QList <float> GetKappas() const;
     QString GetKappasString() const;
@@ -97,6 +96,8 @@ private:
     QTime framerate_time;
     int counted_frames;
     int fps;
+
+    bool oculus_detected;
 
     //these members are updated each time updateOrientation() is called via GetOrientation()
     QVector3D right;

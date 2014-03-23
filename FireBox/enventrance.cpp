@@ -10,10 +10,10 @@ EnvEntrance::EnvEntrance(const QString & u, const int s) :
     childroom(NULL)
 {
 
-    QString urlstr = QUrl::fromPercentEncoding(u.toAscii());
+    QString urlstr = QUrl::fromPercentEncoding(u.toLatin1());
     url = QUrl(urlstr);        
 
-    page = new HTMLPage(url);
+    page->SetURL(url);
 
     anim.Scale(1.0f);
 

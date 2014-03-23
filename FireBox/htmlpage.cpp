@@ -2,10 +2,13 @@
 
 QNetworkAccessManager * HTMLPage::manager = NULL;
 
-HTMLPage::HTMLPage(QUrl u) :
-    loaded(false),
-    url(u)
+HTMLPage::HTMLPage() :
+    loaded(false)
 {
+}
+
+void HTMLPage::SetURL(const QUrl & u) {
+    url = u;
 }
 
 void HTMLPage::Request()
@@ -32,6 +35,74 @@ bool HTMLPage::Loaded()
     return loaded;
 }
 
+void HTMLPage::AddImage(const QString & img_url_str)
+{
+
+    HTMLData newdata;
+    newdata.type = IMAGE;
+
+    if (img_url_str.left(7).compare("http://", Qt::CaseInsensitive) == 0)
+        newdata.data = img_url_str;
+    else if (img_url_str.left(1).compare("/") == 0)
+        newdata.data = url.toString(QUrl::RemovePath) + img_url_str;
+    else
+        newdata.data = url_prefix + QString("/") + img_url_str;
+
+    datas.push_back(newdata);
+    ++numimages;
+
+}
+
+void HTMLPage::AddLink(const QString & link_url_str)
+{
+
+    HTMLData newdata;
+    newdata.type = LINK;
+
+    if (link_url_str.left(7).compare("http://", Qt::CaseInsensitive) == 0) {
+        newdata.data = link_url_str;
+    }
+    else if (link_url_str.left(1).compare("/") == 0) {
+        newdata.data = url.toString(QUrl::RemovePath) + link_url_str;
+    }
+    else {
+        newdata.data = url_prefix + QString("/") + link_url_str;
+    }
+
+    datas.push_back(newdata);
+    ++numlinks;
+
+}
+
+QStringList HTMLPage::GetStringsBetween(const QString & s1, const QString & s2, const QString & str)
+{
+
+    QStringList return_str_list;
+
+    QString process_str = str;
+    while (process_str.length() > 0) {
+
+        //1.  cut up to the first string s1
+        const int i1 = process_str.indexOf(s1);
+        if (i1 == -1) {
+            break;
+        }
+        process_str = process_str.right(process_str.length() - i1 - s1.length());
+
+        //2. cut before the second string s2
+        const int i2 = process_str.indexOf(s2);
+        if (i2 == -1) {
+            break;
+        }
+        return_str_list.push_back(process_str.left(i2));
+
+        process_str = process_str.right(process_str.length() - i2 - s2.length());
+
+    }
+
+    return return_str_list;
+}
+
 QString HTMLPage::HTMLExtract(const QString & tag, const QString & html)
 {
 
@@ -49,7 +120,7 @@ QString HTMLPage::HTMLExtract(const QString & tag, const QString & html)
 }
 
 void HTMLPage::slotFinished()
-{
+{   
 
     QByteArray ba = reply->readAll();
     reply->close();
@@ -68,8 +139,8 @@ void HTMLPage::slotFinished()
 
     datas.clear();
 
-    QString urlstr = url.toString();
-    QString urlprefix = urlstr.left(urlstr.lastIndexOf("/"));
+    url_str = url.toString();
+    url_prefix = url_str.left(url_str.lastIndexOf("/"));
 
     numimages = 0;
     numlinks = 0;
@@ -88,18 +159,7 @@ void HTMLPage::slotFinished()
 
                     ++j;
 
-                    HTMLData newdata;
-                    newdata.type = IMAGE;
-
-                    if (sl2[j].left(7).compare("http://", Qt::CaseInsensitive) == 0)
-                        newdata.data = sl2[j];
-                    else if (sl2[j].left(1).compare("/") == 0)
-                        newdata.data = url.toString(QUrl::RemovePath) + sl2[j];
-                    else
-                        newdata.data = urlprefix + QString("/") + sl2[j];
-
-                    datas.push_back(newdata);
-                    ++numimages;
+                    AddImage(sl2[j]);
 
                 }
 
@@ -107,9 +167,9 @@ void HTMLPage::slotFinished()
 
         }
         else if ((sl[i].contains("a ", Qt::CaseInsensitive) &&
-                    sl[i].contains("href", Qt::CaseInsensitive)) ||
-                    (sl[i].contains("meta ", Qt::CaseInsensitive) &&
-                    sl[i].contains("url", Qt::CaseInsensitive))) {
+                  sl[i].contains("href", Qt::CaseInsensitive)) ||
+                 (sl[i].contains("meta ", Qt::CaseInsensitive) &&
+                  sl[i].contains("url", Qt::CaseInsensitive))) {
 
             QStringList sl2 = sl[i].split("\"");
 
@@ -119,25 +179,57 @@ void HTMLPage::slotFinished()
 
                     ++j;
 
-                    if (sl2[j].right(5).contains(".") && !sl2[j].right(4).contains("htm"))
+                    if (sl2[j].right(5).contains(".") && !sl2[j].right(4).contains("htm")) {
                         continue;
+                    }
 
-                    HTMLData newdata;
-                    newdata.type = LINK;
+                    AddLink(sl2[j]);
 
-                    if (sl2[j].left(7).compare("http://", Qt::CaseInsensitive) == 0)
-                        newdata.data = sl2[j];
-                    else if (sl2[j].left(1).compare("/") == 0)
-                        newdata.data = url.toString(QUrl::RemovePath) + sl2[j];
-                    else
-                        newdata.data = urlprefix + QString("/") + sl2[j];
 
-                    datas.push_back(newdata);
-                    ++numlinks;
+                }
+                else if (sl2[j].contains("data-href", Qt::CaseInsensitive) && sl2[j].contains("=", Qt::CaseInsensitive)) {
+
+                    ++j;
+
+                    AddLink(sl2[j]);
 
                 }
 
             }
+        }
+        else if (sl[i].contains("div ", Qt::CaseInsensitive)) {
+
+            //get this case working:
+            //<div title="Google" align="left" id="hplogo" onload="window.lol&amp;&amp;lol()" style="background:url(/images/srpr/logo11w.png) no-repeat;background-size:269px 95px;height:95px;width:269px"><div nowrap="" style="color:#777;font-size:16px;font-weight:bold;position:relative;left:218px;top:70px">Canada</div></div>
+
+            HTMLData newdata;
+            newdata.type = DIV;
+            newdata.data = sl[i];
+            datas.push_back(newdata);
+
+            //QStringList sl2 = sl[i].split("\"");
+            QStringList sl2 = GetStringsBetween("\"", "\"", sl[i]);
+
+            for (int j=0; j<sl2.size(); ++j) {
+
+                QStringList sl3 = GetStringsBetween("(", ")", sl2[j]);
+
+                for (int k=0; k<sl3.size(); ++k) {
+
+                    QString extension = sl3[k].right(4);
+
+                    if (extension.compare(".png", Qt::CaseInsensitive) == 0 ||
+                            extension.compare(".jpg", Qt::CaseInsensitive) == 0||
+                            extension.compare(".gif", Qt::CaseInsensitive) == 0) {
+
+                        AddImage(sl3[k]);
+
+                    }
+
+                }
+
+            }
+
         }
 
         //extract any other text

@@ -1,6 +1,6 @@
 #include "environment.h"
 
-Environment::Environment(Player * p) :
+Environment::Environment() :
     maxroomperimetersize(300)
 {   
 
@@ -69,6 +69,8 @@ Environment::Environment(Player * p) :
 
     }
 
+    Clear();
+
     tex_tile = 0;
 
     player_curroom = -1;
@@ -76,11 +78,16 @@ Environment::Environment(Player * p) :
     disp_list = 0;
     rebuild_list = true;
 
-    player = p;
 }
 
 Environment::~Environment()
 {
+
+    DeleteDisplayList();
+
+    qDeleteAll(rooms);
+    qDeleteAll(entrances);
+    qDeleteAll(roomtitles);
 
     if (tex_tile > 0) {
 
@@ -89,13 +96,14 @@ Environment::~Environment()
 
     }
 
-    DeleteDisplayList();
-
-    qDeleteAll(rooms);
-    qDeleteAll(entrances);
-    qDeleteAll(roomtitles);
-
 }
+
+void Environment::SetPlayer(Player * p)
+{
+    player = p;
+}
+
+
 
 void Environment::LoadTextures()
 {
@@ -103,7 +111,7 @@ void Environment::LoadTextures()
     if (tex_tile == 0) {
 
         QImage tile_img("assets/tile.png");
-        tex_tile = EnvObject::LoadTexture(tile_img);
+        tex_tile = EnvObject::LoadTexture(tile_img, false);
 
     }
 
@@ -157,14 +165,25 @@ int Environment::AddNewSpace(EnvEntrance * ent, int minarea, int minperim, int x
 
                 cells[i][j].State(EMPTY);
                 cells[i][j].Owner(roomind);
+
+                if (roomind == 0) {
+                    cells[i][j].Color(QVector3D(1,1,1));
+                }
+                else {
+                    //float newcol = float((i + j) % 20) / 20.0f; //rainbow mode
+                    float newcol = float(roomind * 17  % 15) / 15.0f;
+                    cells[i][j].Color((QVector3D(2,2,2) + huecycle(newcol)) * 0.33);
+                }
+
                 //qDebug() << "Setting cell" << i << j << "to state EMPTY and owner" << roomind << cells[i][j].Owner();
                 //cells[i][j].Animate(true);
                 //cells[i][j].TimeOffset((QVector3D(i,0,j) - entrancemid).length() * 0.5f);
                 //cells[i][j].StartTime();
 
-            }
+            }            
 
         }
+
     }
 
     EnvRoom * newRoom = new EnvRoom(roomind);
@@ -265,7 +284,7 @@ void Environment::AddNewEntrance(const int roomind, const QString & url)
         newenter->SetCDir(d);
         entrances.push_back(newenter);
 
-        qDebug() << "Adding entrance to" << url << "at" << x1 << y1 << EnvCell::CellDirToName(d);
+        //qDebug() << "Adding entrance to" << url << "at" << x1 << y1 << EnvCell::CellDirToName(d);
 
         //room keeps list of entrances
         rooms[roomind]->AddChildEntrance(newenter);
@@ -332,10 +351,15 @@ void Environment::AddNewEnvText(const int roomind, const QString & text)
     int x1, y1, x2, y2;
     CellDir d;
 
-    if (FindFreePerimeterPart(roomind, 0, 0, x1, y1, x2, y2, d)) {
+    if (FindFreePerimeterPart(roomind, 1, 0, x1, y1, x2, y2, d)) {
 
-        cells[x1][y1].State(OCCUPIED);
+        for (int i=x1; i<=x2; ++i) {
+            for (int j=y1; j<=y2; ++j) {
+                cells[i][j].State(OCCUPIED);
+            }
+        }
         rooms[roomind]->AddEnvText(x1, y1, d, text);
+        //qDebug() << "adding text" << x1 << y1 << x2 << y2;
 
     }
 
@@ -399,6 +423,8 @@ bool Environment::DoGrowRoom(int minarea, int minperim, int & x1, int & y1, int 
         else {
             return false;
         }
+
+        //qDebug() << "after iteration" << (x2-x1) << (y2-y1);
 
         /*
         if (left > 0) {
@@ -489,13 +515,14 @@ int Environment::EvaluateArea(int x1, int y1, int x2, int y2)
     for (int i=x1; i<=x2; ++i) {
         for (int j=y1; j<=y2; ++j) {
 
-            if (Cell(i, j).State() == EMPTY) {
+            if (Cell(i, j).State() == EMPTY && Cell(i,j).Owner() == -1) {
                 ++area;
             }
 
         }
     }
 
+    //qDebug() << "room area" << area << (x2-x1) << (y2-y1);
     return area;
 
 }
@@ -519,7 +546,7 @@ void Environment::ClipPlayerVelocity()
 {
 
     QVector3D pos = player->Pos();
-    QVector3D vel = player->VelocityVector();
+    QVector3D vel = player->Velocity();
 
     int cell_x = pos.x();
     int cell_z = pos.z();
@@ -550,7 +577,8 @@ void Environment::Update()
 
         if (!entrances[i]->StartedURLRequest()) { //detect opening
 
-            if (entrances[i]->Near(player->Pos(), 2.0f)) {
+            if (entrances[i]->Near(player->Pos(), 2.0f) && !player->Flying()) {
+                SoundManager::Play(3, false);
                 entrances[i]->StartURLRequest();
             }
 
@@ -561,6 +589,30 @@ void Environment::Update()
 
                 //time to build a room, based on contents here
                 HTMLPage * page = entrances[i]->Page();
+
+                //play a custom sound effect for the page
+                //SoundManager::Stop(3);
+                if (page->NumLinks() > 10 && page->NumImages() > 10) {
+                    SoundManager::Play(13, false);
+                }
+                else if (page->NumImages() > 10) {
+                    SoundManager::Play(10, false);
+                }
+                else if (page->NumLinks() > 10) {
+                    SoundManager::Play(12, false);
+                }
+                else if (page->NumTexts() > 10) {
+                    SoundManager::Play(11, false);
+                }
+                else if (page->NumLinks() == 1) {
+                    SoundManager::Play(9, false);
+                }
+                else if (page->NumLinks() == 0) {
+                    SoundManager::Play(8, false);
+                }
+                else {
+                    SoundManager::Play(14, false);
+                }
 
                 //int minperim = (page->NumImages() + page->NumTexts()) * 1 + page->NumLinks() * (entrancesize + 4) + 8;
                 int minperim = float(page->NumImages()) * 2.0f + page->NumLinks() * (entrancesize + 2) + 8;
@@ -771,6 +823,28 @@ void Environment::DrawGL()
 
     skybox.DrawGL();
 
+    //this draws a tiled ground plane
+    /*
+    glColor3f(0.75f, 0.75f, 0.75f);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, tex_tile);
+
+    glBegin(GL_QUADS);
+    glTexCoord2f(0, 0);
+    glVertex3f(0, 0, 0);
+    glTexCoord2f(envsize, 0);
+    glVertex3f(envsize, 0, 0);
+    glTexCoord2f(envsize, envsize);
+    glVertex3f(envsize, 0, envsize);
+    glTexCoord2f(0, envsize);
+    glVertex3f(0, 0, envsize);
+    glEnd();
+
+    glDisable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    */   
+
+    /*
     if (!rebuild_list) {
 
         glCallList(disp_list);
@@ -788,7 +862,6 @@ void Environment::DrawGL()
 
         glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, tex_tile);
-
 
         glBegin(GL_QUADS);
         for (int i=0; i<cells.size(); ++i) {
@@ -811,18 +884,18 @@ void Environment::DrawGL()
 
         glEndList();
 
-        qDebug() << "Estimated num quads:" << num_quads;
+        //qDebug() << "Estimated num quads:" << num_quads;
 
     }
-
+    */
 
     for (int i=0; i<entrances.size(); ++i) {
 
         //if player's in the room, we draw the entrance stuff
-        if (player_curroom == entrances[i]->ParentRoom()->RoomIndex() &&
-                entrances[i]->Near(player->Pos(), 15.0f)) {
-
-            entrances[i]->DrawGL();
+        if (entrances[i]->ParentRoom() != NULL ) {
+            if (player_curroom == entrances[i]->ParentRoom()->RoomIndex() && entrances[i]->Near(player->Pos(), 15.0f)) {
+                entrances[i]->DrawGL();
+            }
 
         }
 
@@ -837,8 +910,6 @@ void Environment::DrawGL()
 
     glDisable(GL_BLEND);
 
-
-
 }
 
 void Environment::DeleteDisplayList()
@@ -847,7 +918,7 @@ void Environment::DeleteDisplayList()
     if (disp_list > 0) {
         glDeleteLists(disp_list, 1);
     }
-    disp_list = 0;
+    disp_list = 0;    
 
 }
 
@@ -890,7 +961,7 @@ bool Environment::CheckNineCollision(const int i, const int j)
 bool Environment::CheckNeighboursEmpty(const int i, const int j, const int roomind)
 {
 
-    if (!(i > 0 && i < cells.size()-1 && j > 0 && j < cells.first().size()-1)) {
+    if (!(i > 0 && i < cells.size()-1 && j > 0 && j < cells.first().size()-1)) {       
         return false;
     } 
 
@@ -923,5 +994,79 @@ bool Environment::CheckNeighboursEmpty(const int i, const int j, const int roomi
     }
 
     return true;
+
+}
+
+QVector3D Environment::heatmap(double val)
+{
+    if(0 <=val&&val <=0.25){
+        return QVector3D(0.0, val*4.0, 1.0);
+    }
+    else if(0.25<val && val <=0.5){
+        return QVector3D(0.0, 1.0, 2.0 - val*4.0);
+    }
+    else if(0.5<val && val <=0.75){
+        return QVector3D(val*4.0 - 2.0, 1.0, 0.0);
+    }
+    else if(0.75<val&& val <=1.0){
+        return QVector3D(1.0, 4.0 - val*4.0, 0.0);
+    }
+    else if(1.0<val){
+        return QVector3D(1.0, 0.0, 0.0);
+    }
+    else{
+        return QVector3D(0.0, 0.0, 1.0);
+    }
+}
+
+QVector3D Environment::huecycle(double val)
+{
+
+    val *= 6;
+
+    if (0 <= val && val < 1) {
+        return QVector3D(0, val, 1.0);
+    }
+    else if (1 <= val && val < 2) {
+        return QVector3D(0, 1, 1 - (val-1));
+    }
+    else if (2 <= val && val < 3) {
+        return QVector3D(val-2, 1, 0);
+    }
+    else if (3 <= val && val < 4) {
+        return QVector3D(1, 1 - (val-3), 0);
+    }
+    else if (4 <= val && val < 5) {
+        return QVector3D(1, 0, val-4);
+    }
+    else if (5 <= val && val < 6) {
+        return QVector3D(1 - (val-5), 0, 1);
+    }
+    else {
+        return QVector3D(1, 1, 1);
+    }
+
+}
+
+void Environment::Clear()
+{
+
+    player_curroom = -1;
+    qDeleteAll(rooms);
+    qDeleteAll(entrances);
+    qDeleteAll(roomtitles);
+
+    rooms.clear();
+    entrances.clear();
+    roomtitles.clear();
+
+    alllinks.clear();
+
+    for (int i=0; i<cells.size(); ++i) {
+        for (int j=0; j<cells[i].size(); ++j) {
+            cells[i][j].State(EMPTY);
+            cells[i][j].Owner(-1);
+        }
+    }
 
 }

@@ -44,7 +44,7 @@ void EnvImg::DrawGL()
 {
 
     if (loaded && !tex) {
-        tex = LoadTexture(img);
+        tex = LoadTexture(img, true);
     }
 
     if (!loaded) {
@@ -60,7 +60,8 @@ void EnvImg::DrawGL()
 
         MathUtil::FacePosDirGL(pos, dir);
 
-        glTranslatef(0, 0, -0.35f);
+        //glTranslatef(0, 0, -0.35f);
+        glTranslatef(0, 2, 0.15f);
 
         float iw;
         float ih;
@@ -107,7 +108,7 @@ void EnvImg::DrawGL()
 
 void EnvImg::slotFinished() {
 
-    loaded = true;
+    loaded = true;   
 
     QByteArray ba = reply->readAll();
     reply->close();

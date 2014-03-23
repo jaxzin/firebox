@@ -1,10 +1,9 @@
 #include "urlentrywidget.h"
 
-URLEntryWidget::URLEntryWidget(const Player * p) :
-    player(p)
+URLEntryWidget::URLEntryWidget()
 {
 
-    curtext = QString("www.dgp.toronto.edu/~mccrae/");
+    curtext = QString("www.");
 
     textgeom.SetFixedSize(true, 0.01f);
     UpdateTextGeom();
@@ -14,8 +13,13 @@ URLEntryWidget::URLEntryWidget(const Player * p) :
 
     time.start();
 
-    Show();
+    hidden = true;
 
+}
+
+void URLEntryWidget::SetPlayer(Player * p)
+{
+    player = p;
 }
 
 void URLEntryWidget::UpdateTextGeom()
@@ -70,18 +74,18 @@ QString URLEntryWidget::Text() const
 void URLEntryWidget::DrawGL()
 {
 
-    if (hidden && time_fadestart.elapsed() > 1000) {
+    if (hidden && time_fadestart.elapsed() > 500) {
         return;
     }
 
-    const float alpha_val = hidden ? qMax(0.0f, 1.0f - float(time_fadestart.elapsed())/1000.0f) : qMin(1.0f, float(time_fadestart.elapsed())/1000.0f);
+    const float alpha_val = hidden ? qMax(0.0f, 1.0f - float(time_fadestart.elapsed())/500.0f) : qMin(1.0f, float(time_fadestart.elapsed())/500.0f);
 
     QVector3D dir = player->Dir();
     dir.setY(0.0f);
     dir.normalize();
 
-    const float len1 = textgeom.TextLength() * 1.1f + 0.05f;
-    const float len2 = textgeom.TextLength() * 1.2f + 0.05f;
+    const float len1 = qMax(textgeom.TextLength(), 1.0f) * 1.1f + 0.05f;
+    const float len2 = qMax(textgeom.TextLength(), 1.0f) * 1.2f + 0.05f;
 
     //enable blending since this widget fades in and out
     glEnable(GL_BLEND);
@@ -89,10 +93,11 @@ void URLEntryWidget::DrawGL()
 
     glPushMatrix();
 
-    MathUtil::FacePosDirGL(player->Pos() + dir, dir * (-1.0f));    
+    MathUtil::FacePosDirGL(player->Pos() + dir * 1.0f, dir * (-1.0f));
 
     //adds some depth motion over time
-    glTranslatef(0, -0.25f, sinf(time.elapsed()/1000.0f)*0.05f);
+    glTranslatef(0, -0.1f, sinf(time.elapsed()/500.0f)*0.025f);
+    glScalef(alpha_val, alpha_val, 1);
 
     glBegin(GL_QUADS);
 
@@ -110,7 +115,8 @@ void URLEntryWidget::DrawGL()
 
     glEnd();
 
-    glTranslatef(-textgeom.TextLength()/2.0f, 0, 0);
+    //glTranslatef(-textgeom.TextLength()/2.0f, 0, 0);
+    glTranslatef(-len1/2.2f, 0, 0);
 
     glColor4f(0.3f, 0.3f, 0.3f, alpha_val);
     glTranslatef(0.0f, -0.02f, 0.0f);
